@@ -1,3 +1,8 @@
+> **Nota.** Este es un fork de [DuqueJR/TruequeU](https://github.com/DuqueJR/TruequeU), el
+> cliente web de TruequeU, desarrollado en equipo para el curso de Ingeniería Web en la
+> Universidad EIA. La API que consume está en
+> [apnauj/TruequeU](https://github.com/apnauj/TruequeU).
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
