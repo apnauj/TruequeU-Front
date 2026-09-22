@@ -1,78 +1,71 @@
-> **Nota.** Este es un fork de [DuqueJR/TruequeU](https://github.com/DuqueJR/TruequeU), el
-> cliente web de TruequeU, desarrollado en equipo para el curso de Ingeniería Web en la
-> Universidad EIA. La API que consume está en
-> [apnauj/TruequeU](https://github.com/apnauj/TruequeU).
+# TruequeU — cliente web
 
-# React + TypeScript + Vite
+Interfaz de la plataforma de trueque entre estudiantes: publicar objetos, buscarlos,
+guardarlos como favoritos, conversar con el dueño y cerrar el intercambio. Incluye un panel
+de moderación para administradores.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> **Nota.** Este es un fork de [DuqueJR/TruequeU](https://github.com/DuqueJR/TruequeU),
+> desarrollado en equipo para el curso de Ingeniería Web en la Universidad EIA. Lo conservo
+> aquí como parte de mi portafolio; el crédito del trabajo es compartido.
 
-Currently, two official plugins are available:
+La API que consume está en **[apnauj/TruequeU](https://github.com/apnauj/TruequeU)**
+(.NET 10 + SQL Server).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**Stack** · React 19 · TypeScript · Vite · Tailwind CSS 4 · React Router 7 · Zustand
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Cómo correrlo
 
-## Expanding the ESLint configuration
+Necesitas Node 20 o superior y la API corriendo en `http://localhost:5000`.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+```bash
+git clone https://github.com/apnauj/TruequeU-Front.git
+cd TruequeU-Front
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+npm install
+npm run dev        # http://localhost:5173
+npm run build      # compila TypeScript y genera dist/
+npm run lint
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+El puerto 5173 no es arbitrario: es uno de los dos orígenes que la política CORS de la API
+permite con credenciales.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Estructura
+
 ```
+src/api/         client.ts — fetch con cookies; mappers.ts — DTO de la API → tipo de UI
+src/services/    auth.service.ts, listing.service.ts — una función por operación
+src/store/       useStore.ts — estado global con Zustand
+src/pages/       Una por ruta: login, sign-up, home, listings, listing-details,
+                 create-listing, chat, favorites, profile, admin-dashboard, not-found
+src/components/  AuthGuard, ThemeProvider, Navbar, ListingCard, ListingList, ReportForm
+```
+
+Las páginas no llaman a `fetch` directamente: pasan por `services/`, que a su vez usa el
+cliente de `api/`. Así el manejo de errores y el envío de credenciales viven en un solo
+lugar.
+
+### Autenticación
+
+La API no devuelve el token en el cuerpo, sino en una cookie `HttpOnly` que el navegador
+guarda y reenvía solo. El cliente nunca lee ni almacena el JWT — de hecho, no puede — así
+que todas las peticiones van con `credentials: "include"` y el estado de sesión se infiere
+del endpoint `/me`.
+
+`AuthGuard` envuelve las rutas privadas y redirige a login cuando esa consulta falla.
+
+### Capa de mapeo
+
+`api/mappers.ts` traduce los DTO de la API a los tipos que usa la interfaz. Existe para que
+un cambio de nombre de campo en el backend se arregle en un archivo y no en quince
+componentes.
+
+## Limitaciones conocidas
+
+- No hay pruebas automatizadas.
+- La URL de la API está fija en el cliente; debería venir de una variable de entorno de Vite.
+- No hay estados de carga ni de error unificados: cada página los maneja por su cuenta.
